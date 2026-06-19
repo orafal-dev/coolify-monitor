@@ -5,11 +5,8 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
   CloudIcon,
   Link01Icon,
-  Moon02Icon,
-  Sun03Icon,
   Tick02Icon,
 } from "@hugeicons/core-free-icons";
-import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Card, CardPanel, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
@@ -22,11 +19,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
-import { Switch } from "@/components/ui/switch";
 import {
   buildDefaultInstanceLabel,
   COOLIFY_CLOUD_BASE_URL,
   DEFAULT_REFRESH_INTERVAL_SECONDS,
+  INSTANCE_TYPE_OPTIONS,
   normalizeBaseUrl,
   type CoolifyInstance,
   type InstanceType,
@@ -55,7 +52,6 @@ export const ConnectionSettings = ({
   onSave,
   onRemove,
 }: ConnectionSettingsProps) => {
-  const { theme, setTheme } = useTheme();
   const [draft, setDraft] = useState<CoolifyInstance>(instance);
   const [isLabelCustomized, setIsLabelCustomized] = useState(mode === "edit");
   const [isTesting, setIsTesting] = useState(false);
@@ -200,10 +196,16 @@ export const ConnectionSettings = ({
     : "Create a bearer token in Coolify under Keys & Tokens. Browser dev mode stores it in session storage only.";
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+    <div
+      className={
+        isSplash
+          ? "flex w-full flex-col"
+          : "mx-auto flex w-full max-w-3xl flex-col gap-6"
+      }
+    >
       <Card className="border-border/60 bg-card/90 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle>
+        <CardHeader className={isSplash ? "p-4 pb-2" : undefined}>
+          <CardTitle className={isSplash ? "text-base" : undefined}>
             {isSplash
               ? "Connect Coolify"
               : isCreate
@@ -211,51 +213,61 @@ export const ConnectionSettings = ({
                 : "Instance settings"}
           </CardTitle>
         </CardHeader>
-        <CardPanel className="space-y-6">
-          <Field>
-            <FieldLabel htmlFor="instance-label">Instance name</FieldLabel>
-            <Input
-              id="instance-label"
-              value={draft.label}
-              onChange={(event) => {
-                setIsLabelCustomized(true);
-                setDraft((current) => ({
-                  ...current,
-                  label: event.target.value,
-                }));
-              }}
-              placeholder={buildDefaultInstanceLabel(
-                draft.instanceType,
-                namingPool,
-              )}
-            />
-            <FieldDescription>
-              Choose any name you like. Defaults to{" "}
-              {buildDefaultInstanceLabel(draft.instanceType, namingPool)}.
-            </FieldDescription>
-          </Field>
+        <CardPanel className={isSplash ? "space-y-3.5 p-4 pt-0" : "space-y-6"}>
+          <div className={isSplash ? "grid gap-3.5 sm:grid-cols-2" : "contents"}>
+            <Field>
+              <FieldLabel htmlFor="instance-label">Instance name</FieldLabel>
+              <Input
+                id="instance-label"
+                value={draft.label}
+                onChange={(event) => {
+                  setIsLabelCustomized(true);
+                  setDraft((current) => ({
+                    ...current,
+                    label: event.target.value,
+                  }));
+                }}
+                placeholder={buildDefaultInstanceLabel(
+                  draft.instanceType,
+                  namingPool,
+                )}
+              />
+              {!isSplash ? (
+                <FieldDescription>
+                  Choose any name you like. Defaults to{" "}
+                  {buildDefaultInstanceLabel(draft.instanceType, namingPool)}.
+                </FieldDescription>
+              ) : null}
+            </Field>
 
-          <Field>
-            <FieldLabel htmlFor="instance-type">Instance type</FieldLabel>
-            <Select
-              value={draft.instanceType}
-              onValueChange={(value) =>
-                handleInstanceTypeChange(value as InstanceType)
-              }
-            >
-              <SelectTrigger id="instance-type" className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectPopup>
-                <SelectItem value="cloud">Coolify Cloud</SelectItem>
-                <SelectItem value="self-hosted">Self-hosted</SelectItem>
-              </SelectPopup>
-            </Select>
-            <FieldDescription>
-              Cloud uses {COOLIFY_CLOUD_BASE_URL}. Self-hosted accepts your own
-              Coolify URL.
-            </FieldDescription>
-          </Field>
+            <Field>
+              <FieldLabel htmlFor="instance-type">Instance type</FieldLabel>
+              <Select
+                value={draft.instanceType}
+                items={INSTANCE_TYPE_OPTIONS}
+                onValueChange={(value) =>
+                  handleInstanceTypeChange(value as InstanceType)
+                }
+              >
+                <SelectTrigger id="instance-type" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectPopup>
+                  {INSTANCE_TYPE_OPTIONS.map(({ value, label }) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectPopup>
+              </Select>
+              {!isSplash ? (
+                <FieldDescription>
+                  Cloud uses {COOLIFY_CLOUD_BASE_URL}. Self-hosted accepts your own
+                  Coolify URL.
+                </FieldDescription>
+              ) : null}
+            </Field>
+          </div>
 
           {!isCloud ? (
             <Field>
@@ -279,56 +291,115 @@ export const ConnectionSettings = ({
               </FieldDescription>
             </Field>
           ) : (
-            <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-muted/30 p-4 text-sm">
-              <HugeiconsIcon icon={CloudIcon} className="size-5 text-sky-500" strokeWidth={2} />
-              <div>
+            <div
+              className={
+                isSplash
+                  ? "flex items-center gap-2.5 rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-sm"
+                  : "flex items-center gap-3 rounded-xl border border-border/60 bg-muted/30 p-4 text-sm"
+              }
+            >
+              <HugeiconsIcon icon={CloudIcon} className="size-4 shrink-0 text-sky-500 sm:size-5" strokeWidth={2} />
+              <div className="min-w-0">
                 <p className="font-medium">Coolify Cloud endpoint</p>
-                <p className="text-muted-foreground">{previewUrl}/api/v1</p>
+                <p className="truncate text-muted-foreground">{previewUrl}/api/v1</p>
               </div>
             </div>
           )}
 
-          <Field>
-            <FieldLabel htmlFor="api-token">API token</FieldLabel>
-            <Input
-              id="api-token"
-              type="password"
-              value={draft.apiToken}
-              onChange={(event) =>
-                setDraft((current) => ({
-                  ...current,
-                  apiToken: event.target.value,
-                }))
-              }
-              placeholder={
-                isEdit && hasStoredToken
-                  ? "Leave blank to keep the saved token"
-                  : "Paste token from Keys & Tokens"
-              }
-            />
-            <FieldDescription>{tokenHelpText}</FieldDescription>
-          </Field>
+          {isSplash ? (
+            <div className="grid gap-x-3.5 gap-y-2 sm:grid-cols-[minmax(0,1fr)_7.5rem]">
+              <Field className="contents">
+                <FieldLabel htmlFor="api-token" className="col-start-1 row-start-1">
+                  API token
+                </FieldLabel>
+                <Input
+                  id="api-token"
+                  className="col-start-1 row-start-2"
+                  type="password"
+                  value={draft.apiToken}
+                  onChange={(event) =>
+                    setDraft((current) => ({
+                      ...current,
+                      apiToken: event.target.value,
+                    }))
+                  }
+                  placeholder="Paste token from Keys & Tokens"
+                />
+                <FieldDescription className="col-start-1 row-start-5 sm:col-span-2 sm:row-start-3">
+                  From Coolify Keys &amp; Tokens.{" "}
+                  {usesNativeSecretStorage()
+                    ? "Stored securely in your keychain."
+                    : "Stored in session storage in browser dev mode."}
+                </FieldDescription>
+              </Field>
+              <Field className="contents">
+                <FieldLabel
+                  htmlFor="refresh-interval"
+                  className="col-start-1 row-start-3 whitespace-nowrap sm:col-start-2 sm:row-start-1"
+                >
+                  Refresh (sec)
+                </FieldLabel>
+                <Input
+                  id="refresh-interval"
+                  className="col-start-1 row-start-4 sm:col-start-2 sm:row-start-2"
+                  type="number"
+                  min={10}
+                  max={300}
+                  value={draft.refreshIntervalSeconds}
+                  onChange={(event) =>
+                    setDraft((current) => ({
+                      ...current,
+                      refreshIntervalSeconds: Number(event.target.value) || 30,
+                    }))
+                  }
+                />
+              </Field>
+            </div>
+          ) : (
+            <>
+              <Field>
+                <FieldLabel htmlFor="api-token">API token</FieldLabel>
+                <Input
+                  id="api-token"
+                  type="password"
+                  value={draft.apiToken}
+                  onChange={(event) =>
+                    setDraft((current) => ({
+                      ...current,
+                      apiToken: event.target.value,
+                    }))
+                  }
+                  placeholder={
+                    isEdit && hasStoredToken
+                      ? "Leave blank to keep the saved token"
+                      : "Paste token from Keys & Tokens"
+                  }
+                />
+                <FieldDescription>{tokenHelpText}</FieldDescription>
+              </Field>
 
-          <Field>
-            <FieldLabel htmlFor="refresh-interval">
-              Refresh interval (seconds)
-            </FieldLabel>
-            <Input
-              id="refresh-interval"
-              type="number"
-              min={10}
-              max={300}
-              value={draft.refreshIntervalSeconds}
-              onChange={(event) =>
-                setDraft((current) => ({
-                  ...current,
-                  refreshIntervalSeconds: Number(event.target.value) || 30,
-                }))
-              }
-            />
-          </Field>
+              <Field>
+                <FieldLabel htmlFor="refresh-interval">
+                  Refresh interval (seconds)
+                </FieldLabel>
+                <Input
+                  id="refresh-interval"
+                  type="number"
+                  min={10}
+                  max={300}
+                  value={draft.refreshIntervalSeconds}
+                  onChange={(event) =>
+                    setDraft((current) => ({
+                      ...current,
+                      refreshIntervalSeconds: Number(event.target.value) || 30,
+                    }))
+                  }
+                />
+              </Field>
+            </>
+          )}
 
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2.5">
             <Button
               type="button"
               variant="outline"
@@ -378,28 +449,6 @@ export const ConnectionSettings = ({
           ) : null}
         </CardPanel>
       </Card>
-
-      {isSplash ? (
-        <Card className="border-border/60 bg-card/80 backdrop-blur-sm">
-          <CardPanel className="flex items-center justify-between gap-4 py-4">
-            <div>
-              <p className="font-medium">Appearance</p>
-              <p className="text-sm text-muted-foreground">
-                Choose light or dark mode for the app.
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <HugeiconsIcon icon={Sun03Icon} className="size-4" strokeWidth={2} />
-              <Switch
-                checked={theme === "dark"}
-                onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
-                aria-label="Toggle dark mode"
-              />
-              <HugeiconsIcon icon={Moon02Icon} className="size-4" strokeWidth={2} />
-            </div>
-          </CardPanel>
-        </Card>
-      ) : null}
     </div>
   );
 };

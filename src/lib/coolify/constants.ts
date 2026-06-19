@@ -8,6 +8,15 @@ export const INSTANCES_STORE_KEY = "instances";
 
 export type InstanceType = "cloud" | "self-hosted";
 
+export const INSTANCE_TYPE_LABELS: Record<InstanceType, string> = {
+  cloud: "Coolify Cloud",
+  "self-hosted": "Self-hosted",
+};
+
+export const INSTANCE_TYPE_OPTIONS = (
+  Object.entries(INSTANCE_TYPE_LABELS) as [InstanceType, string][]
+).map(([value, label]) => ({ value, label }));
+
 export type StoredCoolifyInstance = {
   id: string;
   label: string;
