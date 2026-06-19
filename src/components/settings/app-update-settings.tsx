@@ -8,7 +8,6 @@ import {
 } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import { Card, CardPanel, CardHeader, CardTitle } from "@/components/ui/card";
-import { FieldDescription } from "@/components/ui/field";
 import {
   Progress,
   ProgressIndicator,
@@ -123,7 +122,7 @@ export const AppUpdateSettings = () => {
           ) : null}
         </div>
 
-        <FieldDescription>
+        <p className="text-xs text-muted-foreground">
           Updates are delivered from{" "}
           <a
             href="https://github.com/orafal-dev/coolify-monitor/releases"
@@ -134,7 +133,7 @@ export const AppUpdateSettings = () => {
             GitHub Releases
           </a>{" "}
           and verified with a Tauri signature before installation.
-        </FieldDescription>
+        </p>
       </CardPanel>
     </Card>
   );

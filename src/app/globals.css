@@ -232,13 +232,19 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    @apply font-sans font-sans font-mono overscroll-none;
+  }
   body {
-    @apply bg-background text-foreground;
+    @apply overflow-hidden overscroll-none bg-background text-foreground;
+  }
+  [data-slot="sidebar-wrapper"] {
+    @apply h-svh max-h-svh overflow-hidden;
+  }
+  [data-slot="sidebar-inset"] > main {
+    @apply min-h-0 overscroll-contain;
   }
   code, kbd, samp, pre {
     font-family: var(--font-mono);
-  }
-  html {
-    @apply font-sans font-sans font-mono;
   }
 }

@@ -78,7 +78,7 @@ export const AppShell = () => {
 
   if (!isHydrated) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex h-dvh items-center justify-center overscroll-none">
         <Spinner className="size-8 text-primary" />
       </div>
     );
@@ -338,7 +338,7 @@ export const AppShell = () => {
           ) : null}
         </header>
 
-        <main className="flex-1 overflow-auto p-4 md:p-6">
+        <main className="min-h-0 flex-1 overflow-auto overscroll-contain p-4 md:p-6">
           <AnimatePresence mode="wait">{renderView()}</AnimatePresence>
         </main>
       </SidebarInset>

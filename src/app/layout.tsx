@@ -26,8 +26,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={cn("h-full", inter.variable, interHeading.variable)}>
-      <body className="h-full min-h-full bg-background font-sans text-foreground antialiased">
+    <html lang="en" suppressHydrationWarning className={cn("h-full overscroll-none", inter.variable, interHeading.variable)}>
+      <body className="h-full overflow-hidden overscroll-none bg-background font-sans text-foreground antialiased">
         <AppProviders>{children}</AppProviders>
       </body>
     </html>
