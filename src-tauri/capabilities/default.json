@@ -1,0 +1,18 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Default permissions for Coolify Monitor",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "allow-secrets",
+    "store:default",
+    {
+      "identifier": "http:default",
+      "allow": [
+        { "url": "https://*/*" },
+        { "url": "http://*/*" }
+      ]
+    }
+  ]
+}
