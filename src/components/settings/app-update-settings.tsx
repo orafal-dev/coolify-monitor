@@ -131,8 +131,7 @@ export const AppUpdateSettings = () => {
             className="text-foreground underline underline-offset-4"
           >
             GitHub Releases
-          </a>{" "}
-          and verified with a Tauri signature before installation.
+          </a>
         </p>
       </CardPanel>
     </Card>
