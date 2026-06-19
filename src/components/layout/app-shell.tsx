@@ -13,6 +13,7 @@ import {
 import { ResourceTable } from "@/components/dashboard/resource-table";
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import { ConnectionSettings } from "@/components/settings/connection-settings";
+import { AppUpdateSettings } from "@/components/settings/app-update-settings";
 import { Button } from "@/components/ui/button";
 import { Card, CardPanel } from "@/components/ui/card";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
@@ -107,7 +108,7 @@ export const AppShell = () => {
 
     if (activeView === "settings") {
       return (
-        <motion.div key="settings" {...viewMotion}>
+        <motion.div key="settings" className="space-y-6" {...viewMotion}>
           <ConnectionSettings
             instance={{ ...activeInstance, apiToken: "" }}
             mode="edit"
@@ -116,6 +117,7 @@ export const AppShell = () => {
             onSave={updateInstance}
             onRemove={() => removeInstance(activeInstance.id)}
           />
+          <AppUpdateSettings />
         </motion.div>
       );
     }
