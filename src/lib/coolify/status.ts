@@ -50,6 +50,33 @@ export const parseCoolifyStatus = (status?: string | null): ParsedStatus => {
   return { state: "unknown", label: STATUS_LABELS.unknown, raw };
 };
 
+export const isRunningStatus = (status?: string | null): boolean => {
+  const parsed = parseCoolifyStatus(status);
+  const normalized = parsed.raw.toLowerCase();
+
+  if (parsed.state === "stopped" || parsed.state === "unknown") {
+    return false;
+  }
+
+  if (normalized.includes("exited")) {
+    return false;
+  }
+
+  if (parsed.state === "error") {
+    return normalized.includes("unhealthy") || normalized.includes("running");
+  }
+
+  return (
+    parsed.state === "healthy" ||
+    parsed.state === "running" ||
+    parsed.state === "warning"
+  );
+};
+
+export const countRunning = (
+  items: Array<{ status?: string | null }>,
+): number => items.filter((item) => isRunningStatus(item.status)).length;
+
 export const getStatusBadgeVariant = (
   state: ParsedStatus["state"],
 ): "success" | "info" | "warning" | "error" | "secondary" | "outline" => {

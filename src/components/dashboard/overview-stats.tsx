@@ -12,7 +12,7 @@ import { motion } from "framer-motion";
 import { Card, CardPanel, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { CoolifyOverview } from "@/lib/coolify/types";
-import { parseCoolifyStatus } from "@/lib/coolify/status";
+import { countRunning, parseCoolifyStatus } from "@/lib/coolify/status";
 
 type OverviewStatsProps = {
   overview?: CoolifyOverview;
@@ -58,6 +58,8 @@ export const OverviewStats = ({ overview, isLoading }: OverviewStatsProps) => {
     deployments: overview?.deployments.length ?? 0,
   };
 
+  const runningApplications = countRunning(overview?.applications ?? []);
+
   const healthy = {
     applications: countHealthy(overview?.applications ?? []),
     databases: countHealthy(overview?.databases ?? []),
@@ -93,7 +95,9 @@ export const OverviewStats = ({ overview, isLoading }: OverviewStatsProps) => {
               ) : (
                 <div className="space-y-1">
                   <p className="text-3xl font-semibold tracking-tight">
-                    {totals[card.key]}
+                    {card.key === "applications"
+                      ? `${runningApplications}/${totals.applications}`
+                      : totals[card.key]}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {healthy[card.key]} healthy
