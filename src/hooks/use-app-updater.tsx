@@ -7,6 +7,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -16,8 +17,10 @@ import {
   getAppVersion,
   isTauriRuntime,
   relaunchApp,
+  toPendingUpdateInfo,
 } from "@/lib/updater/runtime";
 import type {
+  PendingUpdateInfo,
   UpdateProgress,
   UpdaterStatus,
 } from "@/lib/updater/runtime.types";
@@ -26,12 +29,12 @@ type AppUpdaterContextValue = {
   isDesktop: boolean;
   status: UpdaterStatus;
   currentVersion: string;
-  pendingUpdate: Update | null;
+  pendingUpdate: PendingUpdateInfo | null;
   progress: UpdateProgress;
   progressPercent: number;
   errorMessage: string | null;
-  checkForUpdates: () => Promise<Update | null>;
-  installUpdate: (update?: Update | null) => Promise<void>;
+  checkForUpdates: () => Promise<PendingUpdateInfo | null>;
+  installUpdate: () => Promise<void>;
   dismissUpdate: () => void;
 };
 
@@ -48,12 +51,15 @@ export const AppUpdaterProvider = ({
 }: AppUpdaterProviderProps) => {
   const [status, setStatus] = useState<UpdaterStatus>("idle");
   const [currentVersion, setCurrentVersion] = useState("");
-  const [pendingUpdate, setPendingUpdate] = useState<Update | null>(null);
+  const [pendingUpdate, setPendingUpdate] = useState<PendingUpdateInfo | null>(
+    null,
+  );
   const [progress, setProgress] = useState<UpdateProgress>({
     downloaded: 0,
     contentLength: 0,
   });
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const updateRef = useRef<Update | null>(null);
   const isDesktop = isTauriRuntime();
 
   useEffect(() => {
@@ -72,6 +78,7 @@ export const AppUpdaterProvider = ({
     setStatus("checking");
     setErrorMessage(null);
     setPendingUpdate(null);
+    updateRef.current = null;
 
     try {
       const update = await checkForUpdate();
@@ -81,9 +88,11 @@ export const AppUpdaterProvider = ({
         return null;
       }
 
-      setPendingUpdate(update);
+      updateRef.current = update;
+      const info = toPendingUpdateInfo(update);
+      setPendingUpdate(info);
       setStatus("available");
-      return update;
+      return info;
     } catch (error) {
       setStatus("error");
       setErrorMessage(
@@ -93,37 +102,36 @@ export const AppUpdaterProvider = ({
     }
   }, [isDesktop]);
 
-  const installUpdate = useCallback(
-    async (update: Update | null = pendingUpdate) => {
-      if (!isDesktop || !update) {
-        return;
-      }
+  const installUpdate = useCallback(async () => {
+    const update = updateRef.current;
+    if (!isDesktop || !update) {
+      return;
+    }
 
-      setStatus("downloading");
-      setErrorMessage(null);
-      setProgress({ downloaded: 0, contentLength: 0 });
+    setStatus("downloading");
+    setErrorMessage(null);
+    setProgress({ downloaded: 0, contentLength: 0 });
 
-      try {
-        await downloadAndInstallUpdate(update, (nextProgress) => {
-          setProgress(nextProgress);
-          setStatus("downloading");
-        });
+    try {
+      await downloadAndInstallUpdate(update, (nextProgress) => {
+        setProgress(nextProgress);
+        setStatus("downloading");
+      });
 
-        setStatus("installing");
-        await relaunchApp();
-      } catch (error) {
-        setStatus("error");
-        setErrorMessage(
-          error instanceof Error
-            ? error.message
-            : "Failed to download or install the update.",
-        );
-      }
-    },
-    [isDesktop, pendingUpdate],
-  );
+      setStatus("installing");
+      await relaunchApp();
+    } catch (error) {
+      setStatus("error");
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Failed to download or install the update.",
+      );
+    }
+  }, [isDesktop]);
 
   const dismissUpdate = useCallback(() => {
+    updateRef.current = null;
     setPendingUpdate(null);
     setStatus("idle");
     setErrorMessage(null);

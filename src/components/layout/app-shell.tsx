@@ -14,6 +14,7 @@ import { ResourceTable } from "@/components/dashboard/resource-table";
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import { ConnectionSettings } from "@/components/settings/connection-settings";
 import { AppUpdateSettings } from "@/components/settings/app-update-settings";
+import { SettingsErrorBoundary } from "@/components/settings/settings-error-boundary";
 import { Button } from "@/components/ui/button";
 import { Card, CardPanel } from "@/components/ui/card";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
@@ -44,6 +45,7 @@ export const AppShell = () => {
     removeInstance,
     switchInstance,
     startCreateInstance,
+    instanceHasStoredToken,
   } = useApp();
 
   const [createDraft, setCreateDraft] = useState(() =>
@@ -108,17 +110,22 @@ export const AppShell = () => {
 
     if (activeView === "settings") {
       return (
-        <motion.div key="settings" className="space-y-6" {...viewMotion}>
-          <ConnectionSettings
-            instance={{ ...activeInstance, apiToken: "" }}
-            mode="edit"
-            existingInstances={instances}
-            hasStoredToken={Boolean(activeInstance.apiToken.trim())}
-            onSave={updateInstance}
-            onRemove={() => removeInstance(activeInstance.id)}
-          />
-          <AppUpdateSettings />
-        </motion.div>
+        <SettingsErrorBoundary>
+          <motion.div key="settings" className="space-y-6" {...viewMotion}>
+            <ConnectionSettings
+              instance={{ ...activeInstance, apiToken: "" }}
+              mode="edit"
+              existingInstances={instances}
+              hasStoredToken={
+                Boolean(activeInstance.apiToken.trim()) ||
+                instanceHasStoredToken(activeInstance.id)
+              }
+              onSave={updateInstance}
+              onRemove={() => removeInstance(activeInstance.id)}
+            />
+            <AppUpdateSettings />
+          </motion.div>
+        </SettingsErrorBoundary>
       );
     }
 

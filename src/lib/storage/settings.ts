@@ -209,14 +209,17 @@ export const loadInstancesState = async (): Promise<HydratedInstancesState> => {
       (instance) => Boolean(instance.apiToken?.trim()),
     );
 
+    let instancesToHydrate = saved.instances;
+
     if (hasEmbeddedTokens) {
       const migrated = await migrateEmbeddedTokens(saved);
       await store.set(INSTANCES_STORE_KEY, migrated);
       await store.save();
+      instancesToHydrate = migrated.instances;
     }
 
     return {
-      instances: await hydrateInstances(saved.instances),
+      instances: await hydrateInstances(instancesToHydrate),
       activeInstanceId: saved.activeInstanceId,
     };
   }

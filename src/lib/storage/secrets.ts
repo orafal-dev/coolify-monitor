@@ -1,3 +1,5 @@
+"use client";
+
 import { invoke } from "@tauri-apps/api/core";
 
 const TOKEN_PREFIX = "coolify-dev-token:";
@@ -15,6 +17,16 @@ const cacheToken = (instanceId: string, token: string): void => {
 const readCachedToken = (instanceId: string): string | null =>
   tokenCache.get(instanceId) ?? null;
 
+const formatSecretError = (action: string, error: unknown): string => {
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof error === "string"
+        ? error
+        : "Unknown keychain error";
+
+  return `Failed to ${action} API token in secure storage: ${message}`;
+};
 export const saveInstanceToken = async (
   instanceId: string,
   token: string,
@@ -29,8 +41,12 @@ export const saveInstanceToken = async (
   }
 
   if (isTauriRuntime()) {
-    await invoke("save_instance_token", { instanceId, token: normalized });
-    cacheToken(instanceId, normalized);
+    try {
+      await invoke("save_instance_token", { instanceId, token: normalized });
+      cacheToken(instanceId, normalized);
+    } catch (error) {
+      throw new Error(formatSecretError("save", error));
+    }
     return;
   }
 
@@ -56,7 +72,15 @@ export const getInstanceToken = async (
 
       cacheToken(instanceId, normalized);
       return normalized;
-    } catch {
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : String(error ?? "Unknown error");
+
+      if (message.toLowerCase().includes("no entry")) {
+        return null;
+      }
+
+      console.error("Failed to read API token from keychain:", message);
       return null;
     }
   }

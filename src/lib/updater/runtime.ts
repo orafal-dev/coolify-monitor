@@ -1,7 +1,10 @@
 import { getVersion } from "@tauri-apps/api/app";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { check, type Update } from "@tauri-apps/plugin-updater";
-import type { UpdateProgress } from "@/lib/updater/runtime.types";
+import type {
+  PendingUpdateInfo,
+  UpdateProgress,
+} from "@/lib/updater/runtime.types";
 
 export const isTauriRuntime = (): boolean =>
   typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
@@ -11,8 +14,18 @@ export const getAppVersion = async (): Promise<string> => {
     return "0.1.0";
   }
 
-  return getVersion();
+  try {
+    return await getVersion();
+  } catch {
+    return "0.1.0";
+  }
 };
+
+export const toPendingUpdateInfo = (update: Update): PendingUpdateInfo => ({
+  version: update.version,
+  body: typeof update.body === "string" ? update.body : undefined,
+  date: update.date,
+});
 
 export const checkForUpdate = async (): Promise<Update | null> => {
   if (!isTauriRuntime()) {

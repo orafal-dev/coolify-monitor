@@ -1,5 +1,3 @@
-import type { Update } from "@tauri-apps/plugin-updater";
-
 export type UpdaterStatus =
   | "idle"
   | "checking"
@@ -14,4 +12,8 @@ export type UpdateProgress = {
   contentLength: number;
 };
 
-export type PendingUpdate = Update;
+export type PendingUpdateInfo = {
+  version: string;
+  body?: string;
+  date?: string;
+};

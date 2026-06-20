@@ -19,6 +19,7 @@ import {
   removeInstanceFromStorage,
   saveInstancesState,
 } from "@/lib/storage/settings";
+import { hasInstanceToken } from "@/lib/storage/secrets";
 
 type AppContextValue = {
   instances: CoolifyInstance[];
@@ -33,6 +34,7 @@ type AppContextValue = {
   updateInstance: (instance: CoolifyInstance) => Promise<void>;
   removeInstance: (instanceId: string) => Promise<void>;
   startCreateInstance: () => void;
+  instanceHasStoredToken: (instanceId: string) => boolean;
 };
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -62,11 +64,25 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   });
   const [isHydrated, setIsHydrated] = useState(false);
   const [activeView, setActiveView] = useState<AppView>("overview");
+  const [storedTokenIds, setStoredTokenIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const hydrate = async () => {
       const saved = await loadInstancesState();
       setInstancesState(saved);
+
+      const tokenChecks = await Promise.all(
+        saved.instances.map(async (instance) => ({
+          id: instance.id,
+          hasToken:
+            Boolean(instance.apiToken.trim()) ||
+            (await hasInstanceToken(instance.id)),
+        })),
+      );
+
+      setStoredTokenIds(
+        new Set(tokenChecks.filter((item) => item.hasToken).map((item) => item.id)),
+      );
       setIsHydrated(true);
     };
 
@@ -77,6 +93,35 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     () => getActiveInstance(instancesState),
     [instancesState],
   );
+
+  const instanceHasStoredToken = useCallback(
+    (instanceId: string) => storedTokenIds.has(instanceId),
+    [storedTokenIds],
+  );
+
+  const markInstanceTokenStored = useCallback((instanceId: string) => {
+    setStoredTokenIds((current) => {
+      if (current.has(instanceId)) {
+        return current;
+      }
+
+      const next = new Set(current);
+      next.add(instanceId);
+      return next;
+    });
+  }, []);
+
+  const unmarkInstanceTokenStored = useCallback((instanceId: string) => {
+    setStoredTokenIds((current) => {
+      if (!current.has(instanceId)) {
+        return current;
+      }
+
+      const next = new Set(current);
+      next.delete(instanceId);
+      return next;
+    });
+  }, []);
 
   const switchInstance = useCallback((instanceId: string) => {
     setInstancesState((current) => {
@@ -100,8 +145,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     await persistState(next);
     setInstancesState(next);
+    markInstanceTokenStored(instance.id);
     setActiveView("overview");
-  }, [instancesState.instances]);
+  }, [instancesState.instances, markInstanceTokenStored]);
 
   const updateInstance = useCallback(async (instance: CoolifyInstance) => {
     const next: HydratedInstancesState = {
@@ -113,8 +159,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     await persistState(next);
     setInstancesState(next);
+    if (instance.apiToken.trim()) {
+      markInstanceTokenStored(instance.id);
+    }
     setActiveView("overview");
-  }, [instancesState.instances]);
+  }, [instancesState.instances, markInstanceTokenStored]);
 
   const removeInstance = useCallback(async (instanceId: string) => {
     await removeInstanceFromStorage(instanceId);
@@ -135,8 +184,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     await persistState(next);
     setInstancesState(next);
+    unmarkInstanceTokenStored(instanceId);
     setActiveView(remaining.length ? "overview" : "overview");
-  }, [instancesState.activeInstanceId, instancesState.instances]);
+  }, [
+    instancesState.activeInstanceId,
+    instancesState.instances,
+    unmarkInstanceTokenStored,
+  ]);
 
   const startCreateInstance = useCallback(() => {
     setActiveView("create-instance");
@@ -146,7 +200,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     () => ({
       instances: instancesState.instances,
       activeInstance,
-      isConfigured: Boolean(activeInstance?.apiToken.trim()),
+      isConfigured: activeInstance
+        ? Boolean(activeInstance.apiToken.trim()) ||
+          storedTokenIds.has(activeInstance.id)
+        : false,
       needsSetup: instancesState.instances.length === 0,
       isHydrated,
       activeView,
@@ -156,15 +213,18 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       updateInstance,
       removeInstance,
       startCreateInstance,
+      instanceHasStoredToken,
     }),
     [
       activeInstance,
       activeView,
       addInstance,
+      instanceHasStoredToken,
       instancesState.instances,
       isHydrated,
       removeInstance,
       startCreateInstance,
+      storedTokenIds,
       switchInstance,
       updateInstance,
     ],

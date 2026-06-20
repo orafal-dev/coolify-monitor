@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
 import { useAppUpdater } from "@/hooks/use-app-updater";
+import { handleExternalLinkClick } from "@/lib/external-link";
 
 export const AppUpdateSettings = () => {
   const {
@@ -129,9 +130,11 @@ export const AppUpdateSettings = () => {
             target="_blank"
             rel="noreferrer"
             className="text-foreground underline underline-offset-4"
+            onClick={handleExternalLinkClick}
           >
             GitHub Releases
-          </a>
+          </a>{" "}
+          and verified with a Tauri signature before installation.
         </p>
       </CardPanel>
     </Card>
