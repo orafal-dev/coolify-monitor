@@ -75,7 +75,7 @@ jobs:
           releaseDraft: true
           prerelease: false
           retryAttempts: 3
-          uploadUpdaterJson: true
+          includeUpdaterJson: true
           updaterJsonPreferNsis: true
           tauriScript: bun run tauri
           args: ${{ matrix.args }}
