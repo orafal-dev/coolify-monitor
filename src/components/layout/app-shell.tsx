@@ -5,6 +5,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { RefreshIcon } from "@hugeicons/core-free-icons";
 import { useEffect, useMemo, useState } from "react";
 import { AppSidebar } from "@/components/layout/app-sidebar";
+import { WindowDragRegion } from "@/components/layout/window-drag-region";
 import { SetupSplash } from "@/components/layout/setup-splash";
 import {
   OverviewHealthBanner,
@@ -321,12 +322,12 @@ export const AppShell = () => {
       <SidebarInset className="bg-gradient-to-br from-background via-background to-muted/20">
         <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border/60 bg-background/80 px-4 backdrop-blur-xl">
           <SidebarTrigger />
-          <div className="min-w-0 flex-1">
+          <WindowDragRegion className="flex min-w-0 flex-1 flex-col justify-center">
             <p className="truncate text-sm font-medium capitalize">{viewTitle}</p>
             <p className="truncate text-xs text-muted-foreground">
               {getInstanceDisplayLabel(activeInstance)} · {activeInstance.baseUrl}
             </p>
-          </div>
+          </WindowDragRegion>
           {isConfigured && activeView !== "create-instance" ? (
             <Button
               variant="outline"

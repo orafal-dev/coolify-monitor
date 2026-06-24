@@ -13,6 +13,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { motion } from "framer-motion";
 import { InstanceSwitcher } from "@/components/layout/instance-switcher";
+import { WindowDragRegion } from "@/components/layout/window-drag-region";
 import type { AppView, CoolifyInstance } from "@/lib/coolify/constants";
 import { cn } from "@/lib/utils";
 import {
@@ -100,10 +101,8 @@ export const AppSidebar = ({
   ];
 
   return (
-    <Sidebar
-      collapsible="icon"
-      className="border-r border-border/60 [&_[data-slot=sidebar-inner]]:pt-7"
-    >
+    <Sidebar collapsible="icon" className="border-r border-border/60">
+      <WindowDragRegion className="h-7 shrink-0" aria-hidden="true" />
       <SidebarHeader className="gap-2 border-b border-border/60 p-2">
         <InstanceSwitcher
           instances={instances}
