@@ -85,7 +85,11 @@ export const OverviewStats = ({ overview, isLoading }: OverviewStatsProps) => {
                 <div
                   className={`rounded-lg bg-gradient-to-br p-2 ${card.accent}`}
                 >
-                  <HugeiconsIcon icon={card.icon} className="size-4" strokeWidth={2} />
+                  <HugeiconsIcon
+                    icon={card.icon}
+                    className="size-4"
+                    strokeWidth={2}
+                  />
                 </div>
               </div>
             </CardHeader>
@@ -144,7 +148,7 @@ export const OverviewHealthBanner = ({
   }
 
   return (
-    <Card className="border-border/60 bg-gradient-to-r from-emerald-500/10 via-transparent to-cyan-500/10">
+    <Card className="border-border/60 bg-emerald-500/10">
       <CardPanel className="flex flex-wrap items-center justify-between gap-4 py-4">
         <div>
           <p className="text-sm text-muted-foreground">Coolify instance</p>
