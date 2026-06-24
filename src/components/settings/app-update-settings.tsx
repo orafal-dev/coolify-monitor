@@ -72,7 +72,9 @@ export const AppUpdateSettings = () => {
             strokeWidth={2}
           />
           <div className="min-w-0 space-y-1">
-            <p className="font-medium">Coolify Monitor {currentVersion || "…"}</p>
+            <p className="font-medium">
+              Coolify Monitor {currentVersion || "…"}
+            </p>
             <p className="text-sm text-muted-foreground">{statusMessage}</p>
             {pendingUpdate?.body ? (
               <p className="text-sm text-muted-foreground whitespace-pre-wrap">
@@ -85,7 +87,9 @@ export const AppUpdateSettings = () => {
         {status === "downloading" ? (
           <Progress value={progressPercent}>
             <div className="flex items-center justify-between gap-3">
-              <span className="text-sm text-muted-foreground">Download progress</span>
+              <span className="text-sm text-muted-foreground">
+                Download progress
+              </span>
               <span className="text-sm tabular-nums">{progressPercent}%</span>
             </div>
             <ProgressTrack>
@@ -105,7 +109,11 @@ export const AppUpdateSettings = () => {
             {status === "checking" ? (
               <Spinner className="size-4" />
             ) : (
-              <HugeiconsIcon icon={RefreshIcon} className="size-4" strokeWidth={2} />
+              <HugeiconsIcon
+                icon={RefreshIcon}
+                className="size-4"
+                strokeWidth={2}
+              />
             )}
             Check for updates
           </Button>
@@ -117,7 +125,11 @@ export const AppUpdateSettings = () => {
               disabled={isBusy}
               aria-label={`Install version ${pendingUpdate.version}`}
             >
-              <HugeiconsIcon icon={Download04Icon} className="size-4" strokeWidth={2} />
+              <HugeiconsIcon
+                icon={Download04Icon}
+                className="size-4"
+                strokeWidth={2}
+              />
               Install {pendingUpdate.version}
             </Button>
           ) : null}
@@ -133,8 +145,7 @@ export const AppUpdateSettings = () => {
             onClick={handleExternalLinkClick}
           >
             GitHub Releases
-          </a>{" "}
-          and verified with a Tauri signature before installation.
+          </a>
         </p>
       </CardPanel>
     </Card>
