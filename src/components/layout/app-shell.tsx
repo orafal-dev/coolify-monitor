@@ -5,12 +5,15 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { RefreshIcon } from "@hugeicons/core-free-icons";
 import { useEffect, useMemo, useState } from "react";
 import { AppSidebar } from "@/components/layout/app-sidebar";
+import { CommandPalette } from "@/components/layout/command-palette";
+import { RefreshStatus } from "@/components/layout/refresh-status";
 import { WindowDragRegion } from "@/components/layout/window-drag-region";
 import { SetupSplash } from "@/components/layout/setup-splash";
 import {
   OverviewHealthBanner,
   OverviewStats,
 } from "@/components/dashboard/overview-stats";
+import { ProjectsView } from "@/components/dashboard/projects-view";
 import { ResourceTable } from "@/components/dashboard/resource-table";
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import { ConnectionSettings } from "@/components/settings/connection-settings";
@@ -18,12 +21,32 @@ import { AppUpdateSettings } from "@/components/settings/app-update-settings";
 import { SettingsErrorBoundary } from "@/components/settings/settings-error-boundary";
 import { Button } from "@/components/ui/button";
 import { Card, CardPanel } from "@/components/ui/card";
+import {
+  ExternalLinkButton,
+  ExternalUrlLinks,
+} from "@/components/ui/external-link";
+import { Kbd } from "@/components/ui/kbd";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Spinner } from "@/components/ui/spinner";
 import { useApp } from "@/hooks/use-app-context";
 import { useCoolifyOverview } from "@/hooks/use-coolify";
-import { createInstanceId, getDefaultInstance, getInstanceDisplayLabel } from "@/lib/coolify/constants";
-import type { CoolifyApiError } from "@/lib/coolify/types";
+import {
+  createInstanceId,
+  getDefaultInstance,
+  getInstanceDisplayLabel,
+} from "@/lib/coolify/constants";
+import {
+  mapApplicationRows,
+  mapDatabaseRows,
+  mapDeploymentRows,
+  mapServerRows,
+  mapServiceRows,
+} from "@/lib/coolify/resource-rows";
+import type { CoolifyApiError, CoolifyApplication, CoolifyServer } from "@/lib/coolify/types";
+import {
+  buildCoolifyResourceUrl,
+  parseExternalUrlItems,
+} from "@/lib/coolify/urls";
 
 const viewMotion = {
   initial: { opacity: 0, y: 12 },
@@ -31,6 +54,27 @@ const viewMotion = {
   exit: { opacity: 0, y: -8 },
   transition: { duration: 0.22, ease: "easeOut" as const },
 };
+
+const getApplicationSiteLinks = (app: CoolifyApplication) =>
+  parseExternalUrlItems(app.fqdn);
+
+const getApplicationRepoLinks = (app: CoolifyApplication) =>
+  parseExternalUrlItems(app.git_repository);
+
+const getApplicationCoolifyUrl = (
+  app: CoolifyApplication,
+  baseUrl: string,
+): string | null =>
+  buildCoolifyResourceUrl(baseUrl, "application", {
+    projectUuid: app.project_uuid,
+    environmentUuid: app.environment_uuid,
+    resourceUuid: app.uuid,
+  });
+
+const getServerCoolifyUrl = (server: CoolifyServer, baseUrl: string): string | null =>
+  buildCoolifyResourceUrl(baseUrl, "server", {
+    resourceUuid: server.uuid,
+  });
 
 export const AppShell = () => {
   const {
@@ -52,6 +96,7 @@ export const AppShell = () => {
   const [createDraft, setCreateDraft] = useState(() =>
     getDefaultInstance({ id: createInstanceId() }, instances),
   );
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
 
   useEffect(() => {
     if (activeView === "create-instance") {
@@ -59,17 +104,42 @@ export const AppShell = () => {
     }
   }, [activeView, instances]);
 
-  const { data, isLoading, isFetching, error, refetch } = useCoolifyOverview(
-    activeInstance,
-    isConfigured && !needsSetup,
-  );
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      if (event.key.toLowerCase() !== "k" || !(event.metaKey || event.ctrlKey)) {
+        return;
+      }
 
-  const errorMessage = error
+      event.preventDefault();
+      setCommandPaletteOpen((current) => !current);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  const {
+    data,
+    isLoading,
+    isFetching,
+    isError,
+    error,
+    refetch,
+    dataUpdatedAt,
+  } = useCoolifyOverview(activeInstance, isConfigured && !needsSetup);
+
+  const isStale = isError && Boolean(data);
+  const isConnectionDown = isError && !data;
+
+  const errorMessage = isConnectionDown
     ? ((error as CoolifyApiError).message ?? "Failed to load Coolify data.")
     : undefined;
 
+  const baseUrl = activeInstance?.baseUrl ?? "";
+
   const counts = useMemo(
     () => ({
+      projects: data?.projects.length ?? 0,
       applications: data?.applications.length ?? 0,
       databases: data?.databases.length ?? 0,
       services: data?.services.length ?? 0,
@@ -77,6 +147,32 @@ export const AppShell = () => {
       deployments: data?.deployments.length ?? 0,
     }),
     [data],
+  );
+
+  const applicationRows = useMemo(
+    () => mapApplicationRows(data?.applications ?? [], baseUrl),
+    [baseUrl, data?.applications],
+  );
+  const databaseRows = useMemo(
+    () => mapDatabaseRows(data?.databases ?? [], baseUrl),
+    [baseUrl, data?.databases],
+  );
+  const serviceRows = useMemo(
+    () => mapServiceRows(data?.services ?? [], baseUrl),
+    [baseUrl, data?.services],
+  );
+  const serverRows = useMemo(
+    () => mapServerRows(data?.servers ?? [], baseUrl),
+    [baseUrl, data?.servers],
+  );
+  const deploymentRows = useMemo(
+    () =>
+      mapDeploymentRows(
+        data?.deployments ?? [],
+        data?.applications ?? [],
+        baseUrl,
+      ),
+    [baseUrl, data?.applications, data?.deployments],
   );
 
   if (!isHydrated) {
@@ -134,6 +230,14 @@ export const AppShell = () => {
       case "overview":
         return (
           <motion.div key="overview" className="space-y-6" {...viewMotion}>
+            {isStale ? (
+              <Card className="border-warning/30 bg-warning/8">
+                <CardPanel className="py-3 text-sm text-warning-foreground">
+                  Showing cached data from the last successful refresh. Latest poll
+                  failed.
+                </CardPanel>
+              </Card>
+            ) : null}
             <OverviewHealthBanner
               overview={data}
               isLoading={isLoading}
@@ -150,20 +254,61 @@ export const AppShell = () => {
                     </p>
                   </div>
                   <div className="space-y-3">
-                    {(data?.applications ?? []).slice(0, 5).map((app) => (
-                      <div
-                        key={app.uuid}
-                        className="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2"
-                      >
-                        <div>
-                          <p className="font-medium">{app.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {app.fqdn ?? app.git_repository ?? "No URL"}
-                          </p>
+                    {(data?.applications ?? []).slice(0, 5).map((app) => {
+                      const siteLinks = getApplicationSiteLinks(app);
+                      const repoLinks = getApplicationRepoLinks(app);
+                      const coolifyUrl = getApplicationCoolifyUrl(app, baseUrl);
+
+                      return (
+                        <div
+                          key={app.uuid}
+                          className="flex items-center justify-between gap-3 rounded-lg border border-border/60 px-3 py-2"
+                        >
+                          <div className="min-w-0">
+                            <p className="font-medium">{app.name}</p>
+                            <div className="mt-0.5 min-w-0">
+                              {siteLinks.length ? (
+                                <ExternalUrlLinks
+                                  items={siteLinks}
+                                  showIcon={false}
+                                  linkClassName="text-xs"
+                                />
+                              ) : repoLinks.length ? (
+                                <ExternalUrlLinks
+                                  items={repoLinks}
+                                  showIcon={false}
+                                  linkClassName="text-xs"
+                                />
+                              ) : (
+                                <span className="text-xs text-muted-foreground">No URL</span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex shrink-0 items-center gap-2">
+                            <StatusBadge status={app.status} />
+                            {coolifyUrl ? (
+                              <ExternalLinkButton
+                                href={coolifyUrl}
+                                label="Open in Coolify"
+                              />
+                            ) : null}
+                            {siteLinks.map((link) => (
+                              <ExternalLinkButton
+                                key={link.href}
+                                href={link.href}
+                                label={`Open ${link.label}`}
+                              />
+                            ))}
+                            {repoLinks.length === 1 ? (
+                              <ExternalLinkButton
+                                href={repoLinks[0].href}
+                                label="Open repository"
+                              />
+                            ) : null}
+                          </div>
                         </div>
-                        <StatusBadge status={app.status} />
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </CardPanel>
               </Card>
@@ -176,28 +321,50 @@ export const AppShell = () => {
                     </p>
                   </div>
                   <div className="space-y-3">
-                    {(data?.servers ?? []).slice(0, 5).map((server) => (
-                      <div
-                        key={server.uuid}
-                        className="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2"
-                      >
-                        <div>
-                          <p className="font-medium">{server.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {server.ip}
-                          </p>
+                    {(data?.servers ?? []).slice(0, 5).map((server) => {
+                      const coolifyUrl = getServerCoolifyUrl(server, baseUrl);
+
+                      return (
+                        <div
+                          key={server.uuid}
+                          className="flex items-center justify-between gap-3 rounded-lg border border-border/60 px-3 py-2"
+                        >
+                          <div>
+                            <p className="font-medium">{server.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {server.ip}
+                            </p>
+                          </div>
+                          <div className="flex shrink-0 items-center gap-2">
+                            <StatusBadge
+                              status={
+                                server.is_reachable ? "running:healthy" : "stopped"
+                              }
+                            />
+                            {coolifyUrl ? (
+                              <ExternalLinkButton
+                                href={coolifyUrl}
+                                label="Open in Coolify"
+                              />
+                            ) : null}
+                          </div>
                         </div>
-                        <StatusBadge
-                          status={
-                            server.is_reachable ? "running:healthy" : "stopped"
-                          }
-                        />
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </CardPanel>
               </Card>
             </div>
+          </motion.div>
+        );
+      case "projects":
+        return (
+          <motion.div key="projects" {...viewMotion}>
+            <ProjectsView
+              overview={data}
+              baseUrl={baseUrl}
+              isLoading={isLoading}
+            />
           </motion.div>
         );
       case "applications":
@@ -209,13 +376,7 @@ export const AppShell = () => {
               isLoading={isLoading}
               emptyTitle="No applications found"
               emptyDescription="Deploy an application in Coolify to see it here."
-              rows={(data?.applications ?? []).map((app) => ({
-                id: app.uuid,
-                name: app.name,
-                status: app.status,
-                meta: app.fqdn ?? app.git_repository ?? undefined,
-                secondary: app.git_branch ?? undefined,
-              }))}
+              rows={applicationRows}
             />
           </motion.div>
         );
@@ -228,13 +389,7 @@ export const AppShell = () => {
               isLoading={isLoading}
               emptyTitle="No databases found"
               emptyDescription="Provision a database in Coolify to monitor it here."
-              rows={(data?.databases ?? []).map((database) => ({
-                id: database.uuid,
-                name: database.name,
-                status: database.status,
-                meta: database.type,
-                secondary: database.is_public ? "Public" : "Private",
-              }))}
+              rows={databaseRows}
             />
           </motion.div>
         );
@@ -247,12 +402,7 @@ export const AppShell = () => {
               isLoading={isLoading}
               emptyTitle="No services found"
               emptyDescription="Add a service stack in Coolify to track it here."
-              rows={(data?.services ?? []).map((service) => ({
-                id: service.uuid,
-                name: service.name,
-                status: service.status,
-                meta: service.description ?? undefined,
-              }))}
+              rows={serviceRows}
             />
           </motion.div>
         );
@@ -265,13 +415,7 @@ export const AppShell = () => {
               isLoading={isLoading}
               emptyTitle="No servers found"
               emptyDescription="Connect a server in Coolify to monitor reachability."
-              rows={(data?.servers ?? []).map((server) => ({
-                id: server.uuid,
-                name: server.name,
-                status: server.is_reachable ? "running:healthy" : "stopped",
-                meta: server.ip,
-                secondary: server.description ?? undefined,
-              }))}
+              rows={serverRows}
             />
           </motion.div>
         );
@@ -284,16 +428,7 @@ export const AppShell = () => {
               isLoading={isLoading}
               emptyTitle="No active deployments"
               emptyDescription="When Coolify deploys resources, they'll appear here."
-              rows={(data?.deployments ?? []).map((deployment) => ({
-                id: deployment.uuid,
-                name:
-                  deployment.application_name ??
-                  deployment.application_uuid ??
-                  deployment.uuid,
-                status: deployment.status,
-                meta: deployment.deployment_url ?? undefined,
-                updatedAt: deployment.updated_at ?? deployment.created_at,
-              }))}
+              rows={deploymentRows}
             />
           </motion.div>
         );
@@ -319,8 +454,8 @@ export const AppShell = () => {
         onCreateInstance={startCreateInstance}
         connectionIssue={errorMessage}
       />
-      <SidebarInset className="bg-gradient-to-br from-background via-background to-muted/20">
-        <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border/60 bg-background/80 px-4 backdrop-blur-xl">
+      <SidebarInset className="min-w-0 overflow-hidden bg-gradient-to-br from-background via-background to-muted/20">
+        <header className="sticky top-0 z-20 flex h-14 min-w-0 items-center gap-3 border-b border-border/60 bg-background/80 px-4 backdrop-blur-xl">
           <SidebarTrigger />
           <WindowDragRegion className="flex min-w-0 flex-1 flex-col justify-center">
             <p className="truncate text-sm font-medium capitalize">{viewTitle}</p>
@@ -329,20 +464,38 @@ export const AppShell = () => {
             </p>
           </WindowDragRegion>
           {isConfigured && activeView !== "create-instance" ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => void refetch()}
-              disabled={isFetching}
-              aria-label="Refresh Coolify data"
-            >
-              {isFetching ? (
-                <Spinner className="size-4" />
-              ) : (
-                <HugeiconsIcon icon={RefreshIcon} className="size-4" strokeWidth={2} />
-              )}
-              Refresh
-            </Button>
+            <div className="flex shrink-0 items-center gap-2">
+              <RefreshStatus
+                dataUpdatedAt={dataUpdatedAt}
+                isLoading={isLoading}
+                isFetching={isFetching}
+                isStale={isStale}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCommandPaletteOpen(true)}
+                aria-label="Open command palette"
+                className="hidden sm:inline-flex"
+              >
+                Command
+                <Kbd className="ms-1">⌘K</Kbd>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => void refetch()}
+                disabled={isFetching}
+                aria-label="Refresh Coolify data"
+              >
+                {isFetching ? (
+                  <Spinner className="size-4" />
+                ) : (
+                  <HugeiconsIcon icon={RefreshIcon} className="size-4" strokeWidth={2} />
+                )}
+                Refresh
+              </Button>
+            </div>
           ) : null}
         </header>
 
@@ -350,6 +503,16 @@ export const AppShell = () => {
           <AnimatePresence mode="wait">{renderView()}</AnimatePresence>
         </main>
       </SidebarInset>
+      <CommandPalette
+        open={commandPaletteOpen}
+        onOpenChange={setCommandPaletteOpen}
+        overview={data}
+        instances={instances}
+        activeInstance={activeInstance}
+        onNavigate={setActiveView}
+        onSwitchInstance={switchInstance}
+        onRefresh={() => void refetch()}
+      />
     </SidebarProvider>
   );
 };

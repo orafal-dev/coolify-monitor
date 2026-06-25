@@ -5,6 +5,11 @@ import {
   toConnection,
 } from "@/lib/coolify/constants";
 import {
+  buildEnvironmentIndex,
+  normalizeOverviewResources,
+} from "@/lib/coolify/normalize-resources";
+import type { CoolifyEnvironmentRef } from "@/lib/coolify/normalize-resources.types";
+import {
   parseCoolifyHealth,
   parseCoolifyVersion,
   parseResponseBody,
@@ -133,10 +138,26 @@ export const fetchOverview = async (
       .reason as CoolifyApiError;
   }
 
+  const environmentResults = await Promise.allSettled(
+    projects.map((project) =>
+      request<CoolifyEnvironmentRef[]>(instance, `/projects/${project.uuid}/environments`),
+    ),
+  );
+
+  const projectEnvironments = environmentResults.map((result) =>
+    result.status === "fulfilled" ? result.value : [],
+  );
+
+  const environmentIndex = buildEnvironmentIndex(projects, projectEnvironments);
+  const normalizedResources = normalizeOverviewResources(
+    { applications, databases, services, projects, servers, deployments },
+    environmentIndex,
+  );
+
   return {
-    applications,
-    databases,
-    services,
+    applications: normalizedResources.applications,
+    databases: normalizedResources.databases,
+    services: normalizedResources.services,
     servers,
     projects,
     deployments,

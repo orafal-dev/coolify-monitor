@@ -41,6 +41,7 @@ export type HydratedInstancesState = {
 
 export type AppView =
   | "overview"
+  | "projects"
   | "applications"
   | "databases"
   | "services"

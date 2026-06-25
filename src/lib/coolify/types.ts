@@ -8,6 +8,8 @@ export type CoolifyApplication = {
   description?: string | null;
   project_uuid?: string | null;
   environment_name?: string | null;
+  environment_uuid?: string | null;
+  environment_id?: number | null;
 };
 
 export type CoolifyDatabase = {
@@ -17,6 +19,9 @@ export type CoolifyDatabase = {
   status: string;
   is_public?: boolean;
   environment_id?: number;
+  project_uuid?: string | null;
+  environment_name?: string | null;
+  environment_uuid?: string | null;
 };
 
 export type CoolifyService = {
@@ -24,6 +29,11 @@ export type CoolifyService = {
   name: string;
   status: string;
   description?: string | null;
+  fqdn?: string | null;
+  project_uuid?: string | null;
+  environment_name?: string | null;
+  environment_uuid?: string | null;
+  environment_id?: number | null;
 };
 
 export type CoolifyServer = {

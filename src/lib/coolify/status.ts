@@ -113,6 +113,75 @@ export const getStatusDotClass = (state: ParsedStatus["state"]): string => {
   }
 };
 
+const STATUS_SEVERITY: Record<ParsedStatus["state"], number> = {
+  error: 0,
+  warning: 1,
+  stopped: 2,
+  unknown: 3,
+  running: 4,
+  healthy: 5,
+};
+
+export const getStatusSeverity = (status?: string | null): number => {
+  const state = parseCoolifyStatus(status).state;
+  return STATUS_SEVERITY[state];
+};
+
+export const getWorstStatus = (
+  statuses: Array<string | null | undefined>,
+): ParsedStatus["state"] => {
+  if (!statuses.length) {
+    return "unknown";
+  }
+
+  let worst: ParsedStatus["state"] = "healthy";
+  let worstSeverity = STATUS_SEVERITY.healthy;
+
+  for (const status of statuses) {
+    const parsed = parseCoolifyStatus(status);
+    const severity = STATUS_SEVERITY[parsed.state];
+    if (severity < worstSeverity) {
+      worstSeverity = severity;
+      worst = parsed.state;
+    }
+  }
+
+  return worst;
+};
+
+export const formatRelativeTimeFromMs = (timestampMs?: number | null): string => {
+  if (!timestampMs) {
+    return "—";
+  }
+
+  const diffMs = Date.now() - timestampMs;
+  if (diffMs < 0) {
+    return "just now";
+  }
+
+  const diffSeconds = Math.floor(diffMs / 1000);
+  if (diffSeconds < 10) {
+    return "just now";
+  }
+
+  if (diffSeconds < 60) {
+    return `${diffSeconds}s ago`;
+  }
+
+  const diffMinutes = Math.floor(diffSeconds / 60);
+  if (diffMinutes < 60) {
+    return `${diffMinutes}m ago`;
+  }
+
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) {
+    return `${diffHours}h ago`;
+  }
+
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays}d ago`;
+};
+
 export const formatRelativeTime = (value?: string | null): string => {
   if (!value) {
     return "—";

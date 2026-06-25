@@ -6,6 +6,7 @@ import {
   AlertCircleIcon,
   CloudIcon,
   DatabaseIcon,
+  Folder01Icon,
   Rocket01Icon,
   ServerStack01Icon,
   Settings01Icon,
@@ -42,6 +43,7 @@ type AppSidebarProps = {
   activeView: AppView;
   onNavigate: (view: AppView) => void;
   counts: {
+    projects: number;
     applications: number;
     databases: number;
     services: number;
@@ -67,6 +69,12 @@ export const AppSidebar = ({
 }: AppSidebarProps) => {
   const navItems: NavItem[] = [
     { id: "overview", label: "Overview", icon: Activity01Icon },
+    {
+      id: "projects",
+      label: "Projects",
+      icon: Folder01Icon,
+      badge: counts.projects,
+    },
     {
       id: "applications",
       label: "Applications",
@@ -162,7 +170,7 @@ export const AppSidebar = ({
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           className={cn(
-            "rounded-xl border border-border/60 bg-gradient-to-br from-violet-500/10 via-transparent to-cyan-500/10 p-3 text-xs text-muted-foreground",
+            "rounded-xl border border-border/60 bg-gradient-to-br from-violet-500/10 via-transparent to-cyan-500/10 p-3 text-xs text-pretty text-muted-foreground",
           )}
         >
           Switch between Coolify instances anytime from the header menu.

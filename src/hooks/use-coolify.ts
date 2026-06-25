@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { fetchOverview, validateConnection } from "@/lib/coolify/client";
 import type { CoolifyInstance } from "@/lib/coolify/constants";
 import { resolveInstanceWithToken } from "@/lib/storage/resolve-instance-token";
@@ -51,6 +51,7 @@ export const useCoolifyOverview = (
       : false,
     staleTime: 10_000,
     retry: 1,
+    placeholderData: keepPreviousData,
   });
 };
 
