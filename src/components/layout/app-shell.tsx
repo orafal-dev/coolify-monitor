@@ -18,6 +18,7 @@ import { ResourceTable } from "@/components/dashboard/resource-table";
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import { ConnectionSettings } from "@/components/settings/connection-settings";
 import { AppUpdateSettings } from "@/components/settings/app-update-settings";
+import { NotificationSettingsPanel } from "@/components/settings/notification-settings";
 import { SettingsErrorBoundary } from "@/components/settings/settings-error-boundary";
 import { Button } from "@/components/ui/button";
 import { Card, CardPanel } from "@/components/ui/card";
@@ -221,6 +222,7 @@ export const AppShell = () => {
               onRemove={() => removeInstance(activeInstance.id)}
             />
             <AppUpdateSettings />
+            <NotificationSettingsPanel />
           </motion.div>
         </SettingsErrorBoundary>
       );

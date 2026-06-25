@@ -9,8 +9,16 @@
     "allow-secrets",
     "store:default",
     "opener:default",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        { "url": "x-apple.systempreferences:*" },
+        { "url": "ms-settings:*" }
+      ]
+    },
     "updater:default",
     "process:default",
+    "notification:default",
     {
       "identifier": "http:default",
       "allow": [

@@ -15,6 +15,12 @@ import {
   getInstanceToken,
   saveInstanceToken,
 } from "@/lib/storage/secrets";
+import {
+  DEFAULT_NOTIFICATION_SETTINGS,
+  NOTIFICATION_ONBOARDING_KEY,
+  NOTIFICATION_SETTINGS_KEY,
+  type NotificationSettings,
+} from "@/lib/notifications/notification-settings.types";
 
 const LEGACY_CONNECTION_KEY = "connection";
 
@@ -257,3 +263,94 @@ export const removeInstanceFromStorage = async (
 ): Promise<void> => {
   await deleteInstanceToken(instanceId);
 };
+
+const readNotificationSettingsFromLocalStorage = (): NotificationSettings => {
+  if (typeof window === "undefined") {
+    return DEFAULT_NOTIFICATION_SETTINGS;
+  }
+
+  const raw = window.localStorage.getItem(NOTIFICATION_SETTINGS_KEY);
+  if (!raw) {
+    return DEFAULT_NOTIFICATION_SETTINGS;
+  }
+
+  try {
+    return { ...DEFAULT_NOTIFICATION_SETTINGS, ...JSON.parse(raw) };
+  } catch {
+    return DEFAULT_NOTIFICATION_SETTINGS;
+  }
+};
+
+const writeNotificationSettingsToLocalStorage = (
+  settings: NotificationSettings,
+): void => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.setItem(NOTIFICATION_SETTINGS_KEY, JSON.stringify(settings));
+};
+
+const readOnboardingFromLocalStorage = (): boolean => {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return window.localStorage.getItem(NOTIFICATION_ONBOARDING_KEY) === "true";
+};
+
+const writeOnboardingToLocalStorage = (complete: boolean): void => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.setItem(
+    NOTIFICATION_ONBOARDING_KEY,
+    complete ? "true" : "false",
+  );
+};
+
+export const loadNotificationOnboardingComplete = async (): Promise<boolean> => {
+  if (!isTauriRuntime()) {
+    return true;
+  }
+
+  const store = await getStore();
+  const value = await store.get<boolean>(NOTIFICATION_ONBOARDING_KEY);
+  return value === true;
+};
+
+export const saveNotificationOnboardingComplete = async (): Promise<void> => {
+  if (!isTauriRuntime()) {
+    writeOnboardingToLocalStorage(true);
+    return;
+  }
+
+  const store = await getStore();
+  await store.set(NOTIFICATION_ONBOARDING_KEY, true);
+  await store.save();
+};
+
+export const loadNotificationSettings = async (): Promise<NotificationSettings> => {
+  if (!isTauriRuntime()) {
+    return readNotificationSettingsFromLocalStorage();
+  }
+
+  const store = await getStore();
+  const saved = await store.get<NotificationSettings>(NOTIFICATION_SETTINGS_KEY);
+  return saved ? { ...DEFAULT_NOTIFICATION_SETTINGS, ...saved } : DEFAULT_NOTIFICATION_SETTINGS;
+};
+
+export const saveNotificationSettings = async (
+  settings: NotificationSettings,
+): Promise<void> => {
+  if (!isTauriRuntime()) {
+    writeNotificationSettingsToLocalStorage(settings);
+    return;
+  }
+
+  const store = await getStore();
+  await store.set(NOTIFICATION_SETTINGS_KEY, settings);
+  await store.save();
+};
+

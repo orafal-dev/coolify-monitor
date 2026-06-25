@@ -7,6 +7,7 @@ import { AppUpdaterProvider } from "@/hooks/use-app-updater";
 import { UpdatePromptDialog } from "@/components/updater/update-prompt-dialog";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { StatusNotificationWatcher } from "@/components/notifications/status-notification-watcher";
 
 export const AppProviders = ({ children }: { children: ReactNode }) => {
   const [queryClient] = useState(
@@ -27,6 +28,7 @@ export const AppProviders = ({ children }: { children: ReactNode }) => {
           <AppUpdaterProvider>
             <AppProvider>
               {children}
+              <StatusNotificationWatcher />
               <UpdatePromptDialog />
             </AppProvider>
           </AppUpdaterProvider>
