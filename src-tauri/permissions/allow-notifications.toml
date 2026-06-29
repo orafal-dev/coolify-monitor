@@ -1,0 +1,8 @@
+[[permission]]
+identifier = "allow-notifications"
+description = "Allows checking, requesting, and sending native system notifications."
+commands.allow = [
+  "is_system_notification_granted",
+  "request_system_notification_permission",
+  "send_system_notification",
+]

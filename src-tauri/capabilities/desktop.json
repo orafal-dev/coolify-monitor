@@ -9,6 +9,7 @@
     "main"
   ],
   "permissions": [
+    "allow-notifications",
     "updater:default",
     "process:default",
     "opener:default",

@@ -1,3 +1,4 @@
+mod notifications;
 mod secrets;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -10,6 +11,9 @@ pub fn run() {
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_notification::init())
         .invoke_handler(tauri::generate_handler![
+            notifications::is_system_notification_granted,
+            notifications::request_system_notification_permission,
+            notifications::send_system_notification,
             secrets::save_instance_token,
             secrets::get_instance_token,
             secrets::delete_instance_token,

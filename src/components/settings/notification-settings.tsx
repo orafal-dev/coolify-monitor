@@ -17,6 +17,7 @@ import {
   loadNotificationSettings,
   saveNotificationSettings,
 } from "@/lib/storage/settings";
+import { sendTestNotification } from "@/lib/notifications/send-notification";
 
 export const NotificationSettingsPanel = () => {
   const { isDesktop, isGranted, isChecking, request, openOsSettings } =
@@ -25,6 +26,7 @@ export const NotificationSettingsPanel = () => {
     DEFAULT_NOTIFICATION_SETTINGS,
   );
   const [isHydrated, setIsHydrated] = useState(false);
+  const [isSendingTest, setIsSendingTest] = useState(false);
   const canOpenOsSettings = supportsNotificationOsSettings();
 
   useEffect(() => {
@@ -64,6 +66,16 @@ export const NotificationSettingsPanel = () => {
 
   const handleOpenSettings = (): void => {
     void openOsSettings();
+  };
+
+  const handleSendTest = async (): Promise<void> => {
+    setIsSendingTest(true);
+
+    try {
+      await sendTestNotification();
+    } finally {
+      setIsSendingTest(false);
+    }
   };
 
   if (!isDesktop) {
@@ -170,7 +182,29 @@ export const NotificationSettingsPanel = () => {
               </Button>
             ) : null}
           </div>
-        ) : null}
+        ) : (
+          <div className="flex flex-wrap gap-2.5">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void handleSendTest()}
+              disabled={isSendingTest}
+              aria-label="Send test notification"
+            >
+              {isSendingTest ? "Sending…" : "Send test notification"}
+            </Button>
+            {canOpenOsSettings ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleOpenSettings}
+                aria-label="Open notification settings"
+              >
+                Open notification settings
+              </Button>
+            ) : null}
+          </div>
+        )}
       </CardPanel>
     </Card>
   );

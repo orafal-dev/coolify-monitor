@@ -1,3 +1,4 @@
+import { invoke } from "@tauri-apps/api/core";
 import { isTauriRuntime } from "@/lib/updater/runtime";
 import type { StatusChangeEvent } from "@/lib/notifications/status-snapshot.types";
 import { formatStatusChangeNotification } from "@/lib/notifications/status-snapshot";
@@ -8,8 +9,7 @@ export const checkNotificationPermission = async (): Promise<boolean> => {
     return false;
   }
 
-  const { isPermissionGranted } = await import("@tauri-apps/plugin-notification");
-  return isPermissionGranted();
+  return invoke<boolean>("is_system_notification_granted");
 };
 
 export const requestNotificationPermission = async (): Promise<boolean> => {
@@ -17,20 +17,12 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
     return false;
   }
 
-  const { isPermissionGranted, requestPermission } = await import(
-    "@tauri-apps/plugin-notification"
-  );
-
-  if (await isPermissionGranted()) {
-    return true;
-  }
-
-  const permission = await requestPermission();
-  return permission === "granted";
+  return invoke<boolean>("request_system_notification_permission");
 };
 
-export const sendStatusChangeNotification = async (
-  event: StatusChangeEvent,
+export const sendSystemNotification = async (
+  title: string,
+  body: string,
 ): Promise<void> => {
   if (!isTauriRuntime()) {
     return;
@@ -41,10 +33,21 @@ export const sendStatusChangeNotification = async (
     return;
   }
 
-  const { sendNotification } = await import("@tauri-apps/plugin-notification");
-  const { title, body } = formatStatusChangeNotification(event);
+  await invoke("send_system_notification", { title, body });
+};
 
-  sendNotification({ title, body });
+export const sendTestNotification = async (): Promise<void> => {
+  await sendSystemNotification(
+    "Coolify Monitor",
+    "Notifications are working. You'll be alerted when deployments fail or services go unhealthy.",
+  );
+};
+
+export const sendStatusChangeNotification = async (
+  event: StatusChangeEvent,
+): Promise<void> => {
+  const { title, body } = formatStatusChangeNotification(event);
+  await sendSystemNotification(title, body);
 };
 
 export const shouldNotifyForEvent = (

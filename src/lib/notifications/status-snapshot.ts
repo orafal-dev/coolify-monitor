@@ -68,6 +68,16 @@ export const detectStatusChanges = (
   for (const [resourceId, nextDeployment] of next.deployments) {
     const prevDeployment = previous.deployments.get(resourceId);
     if (!prevDeployment) {
+      if (isErrorState(nextDeployment.status)) {
+        events.push({
+          category: "deployment",
+          resourceId,
+          resourceName: nextDeployment.name,
+          previousValue: "unknown",
+          currentValue: nextDeployment.status,
+          instanceLabel,
+        });
+      }
       continue;
     }
 

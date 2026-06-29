@@ -79,6 +79,7 @@ export const NotificationPermissionScreen = ({
               <p className="mt-2 max-w-sm text-sm text-muted-foreground">
                 Coolify Monitor alerts you when apps become unhealthy, deployments
                 fail, or servers go offline — even when the app is in the background.
+                macOS will show a permission prompt and add this app to System Settings.
               </p>
             </div>
 
