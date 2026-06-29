@@ -200,7 +200,7 @@ export const ConnectionSettings = ({
       className={
         isSplash
           ? "flex w-full flex-col"
-          : "mx-auto flex w-full max-w-3xl flex-col gap-6"
+          : "mx-auto flex w-full flex-col gap-6"
       }
     >
       <Card className="border-border/60 bg-card/90 backdrop-blur-sm">
