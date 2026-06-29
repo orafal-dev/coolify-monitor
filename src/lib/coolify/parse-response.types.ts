@@ -1,4 +1,5 @@
 export type RawCoolifyDeployment = {
+  id?: number | string | null;
   uuid?: string | null;
   deployment_uuid?: string | null;
   status?: string | null;

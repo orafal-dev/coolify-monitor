@@ -38,43 +38,88 @@ export const parseCoolifyVersion = (data: unknown): string | undefined => {
   return undefined;
 };
 
-const extractDeploymentList = (data: unknown): RawCoolifyDeployment[] => {
-  if (Array.isArray(data)) {
-    return data as RawCoolifyDeployment[];
+const readString = (value: unknown): string | null => {
+  if (value == null) {
+    return null;
   }
 
-  if (data && typeof data === "object") {
-    const record = data as Record<string, unknown>;
+  const normalized = String(value).trim();
+  return normalized || null;
+};
 
-    if (Array.isArray(record.deployments)) {
-      return record.deployments as RawCoolifyDeployment[];
-    }
+const isDeploymentLike = (value: unknown): value is RawCoolifyDeployment =>
+  value != null &&
+  typeof value === "object" &&
+  ("deployment_uuid" in value ||
+    "application_name" in value ||
+    "status" in value ||
+    "application_id" in value);
 
-    if (Array.isArray(record.data)) {
-      return record.data as RawCoolifyDeployment[];
-    }
+const toDeploymentList = (value: unknown): RawCoolifyDeployment[] => {
+  if (Array.isArray(value)) {
+    return value as RawCoolifyDeployment[];
+  }
+
+  if (!value || typeof value !== "object") {
+    return [];
+  }
+
+  if (isDeploymentLike(value)) {
+    return [value];
+  }
+
+  const values = Object.values(value as Record<string, unknown>);
+  if (values.length > 0 && values.every(isDeploymentLike)) {
+    return values as RawCoolifyDeployment[];
   }
 
   return [];
 };
 
+const extractDeploymentList = (data: unknown): RawCoolifyDeployment[] => {
+  if (Array.isArray(data)) {
+    return data as RawCoolifyDeployment[];
+  }
+
+  if (!data || typeof data !== "object") {
+    return [];
+  }
+
+  const record = data as Record<string, unknown>;
+
+  if ("deployments" in record) {
+    return toDeploymentList(record.deployments);
+  }
+
+  if ("data" in record) {
+    return toDeploymentList(record.data);
+  }
+
+  return toDeploymentList(data);
+};
+
 const normalizeDeployment = (
   deployment: RawCoolifyDeployment,
 ): CoolifyDeployment | null => {
-  const uuid = (deployment.uuid ?? deployment.deployment_uuid)?.trim();
+  const uuid =
+    readString(deployment.uuid) ??
+    readString(deployment.deployment_uuid) ??
+    readString(deployment.id);
+
   if (!uuid) {
     return null;
   }
 
   return {
     uuid,
-    status: deployment.status?.trim() || "unknown",
-    application_name: deployment.application_name ?? null,
+    status: readString(deployment.status) ?? "unknown",
+    application_name: readString(deployment.application_name),
     application_uuid:
-      deployment.application_uuid ?? deployment.application_id ?? null,
-    deployment_url: deployment.deployment_url ?? null,
-    created_at: deployment.created_at ?? null,
-    updated_at: deployment.updated_at ?? null,
+      readString(deployment.application_uuid) ??
+      readString(deployment.application_id),
+    deployment_url: readString(deployment.deployment_url),
+    created_at: readString(deployment.created_at),
+    updated_at: readString(deployment.updated_at),
   };
 };
 
