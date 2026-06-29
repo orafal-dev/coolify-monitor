@@ -1,3 +1,5 @@
+export const UPDATE_CHECK_INTERVAL_MS = 5 * 60 * 1000;
+
 export type UpdaterStatus =
   | "idle"
   | "checking"

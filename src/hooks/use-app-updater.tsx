@@ -24,6 +24,7 @@ import type {
   UpdateProgress,
   UpdaterStatus,
 } from "@/lib/updater/runtime.types";
+import { UPDATE_CHECK_INTERVAL_MS } from "@/lib/updater/runtime.types";
 
 type AppUpdaterContextValue = {
   isDesktop: boolean;
@@ -60,7 +61,10 @@ export const AppUpdaterProvider = ({
   });
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const updateRef = useRef<Update | null>(null);
+  const statusRef = useRef<UpdaterStatus>(status);
   const isDesktop = isTauriRuntime();
+
+  statusRef.current = status;
 
   useEffect(() => {
     if (!isDesktop) {
@@ -145,6 +149,26 @@ export const AppUpdaterProvider = ({
 
     void checkForUpdates();
   }, [checkOnMount, checkForUpdates, isDesktop]);
+
+  useEffect(() => {
+    if (!isDesktop) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      const currentStatus = statusRef.current;
+
+      if (
+        currentStatus === "idle" ||
+        currentStatus === "up-to-date" ||
+        currentStatus === "error"
+      ) {
+        void checkForUpdates();
+      }
+    }, UPDATE_CHECK_INTERVAL_MS);
+
+    return () => window.clearInterval(intervalId);
+  }, [checkForUpdates, isDesktop]);
 
   const progressPercent =
     progress.contentLength > 0

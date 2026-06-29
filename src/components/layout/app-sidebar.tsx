@@ -14,6 +14,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { motion } from "framer-motion";
 import { InstanceSwitcher } from "@/components/layout/instance-switcher";
+import { SidebarUpdatePrompt } from "@/components/updater/sidebar-update-prompt";
 import { WindowDragRegion } from "@/components/layout/window-drag-region";
 import type { AppView, CoolifyInstance } from "@/lib/coolify/constants";
 import { cn } from "@/lib/utils";
@@ -165,12 +166,13 @@ export const AppSidebar = ({
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-border/60 p-4 group-data-[collapsible=icon]:hidden">
+      <SidebarFooter className="space-y-3 border-t border-border/60 p-4 group-data-[collapsible=icon]:p-2">
+        <SidebarUpdatePrompt />
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           className={cn(
-            "rounded-xl border border-border/60 bg-gradient-to-br from-violet-500/10 via-transparent to-cyan-500/10 p-3 text-xs text-pretty text-muted-foreground",
+            "rounded-xl border border-border/60 bg-gradient-to-br from-violet-500/10 via-transparent to-cyan-500/10 p-3 text-xs text-pretty text-muted-foreground group-data-[collapsible=icon]:hidden",
           )}
         >
           Switch between Coolify instances anytime from the header menu.
