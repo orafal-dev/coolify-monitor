@@ -32,6 +32,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
 
 type NavItem = {
   id: AppView;
@@ -175,7 +176,9 @@ export const AppSidebar = ({
             "rounded-xl border border-border/60 bg-gradient-to-br from-violet-500/10 via-transparent to-cyan-500/10 p-3 text-xs text-pretty text-muted-foreground group-data-[collapsible=icon]:hidden",
           )}
         >
-          Switch between Coolify instances anytime from the header menu.
+          Got ideas? <Link href="https://github.com/orafal-dev/coolify-monitor/discussions" target="_blank" className="text-primary underline">
+            Report an issue or suggest a feature
+          </Link>
         </motion.div>
       </SidebarFooter>
       <SidebarRail />
