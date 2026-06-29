@@ -10,6 +10,7 @@ import {
 } from "@/lib/coolify/normalize-resources";
 import type { CoolifyEnvironmentRef } from "@/lib/coolify/normalize-resources.types";
 import {
+  parseCoolifyDeployments,
   parseCoolifyHealth,
   parseCoolifyVersion,
   parseResponseBody,
@@ -18,7 +19,6 @@ import type {
   CoolifyApiError,
   CoolifyApplication,
   CoolifyDatabase,
-  CoolifyDeployment,
   CoolifyHealth,
   CoolifyOverview,
   CoolifyProject,
@@ -110,7 +110,7 @@ export const fetchOverview = async (
     request<CoolifyService[]>(instance, "/services"),
     request<CoolifyServer[]>(instance, "/servers"),
     request<CoolifyProject[]>(instance, "/projects"),
-    request<CoolifyDeployment[]>(instance, "/deployments"),
+    request<unknown>(instance, "/deployments"),
     request<unknown>(instance, "/version"),
     request<unknown>(instance, "/health"),
   ]);
@@ -123,7 +123,9 @@ export const fetchOverview = async (
   const services = unwrap(servicesResult, []);
   const servers = unwrap(serversResult, []);
   const projects = unwrap(projectsResult, []);
-  const deployments = unwrap(deploymentsResult, []);
+  const deployments = parseCoolifyDeployments(
+    unwrap(deploymentsResult, [] as unknown),
+  );
 
   const criticalFailures = [
     applicationsResult,

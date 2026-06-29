@@ -13,6 +13,22 @@ export const parseCoolifyStatus = (status?: string | null): ParsedStatus => {
   const raw = status?.trim() || "unknown";
   const normalized = raw.toLowerCase();
 
+  if (normalized === "queued") {
+    return { state: "warning", label: "Queued", raw };
+  }
+
+  if (normalized === "in_progress" || normalized.includes("in_progress")) {
+    return { state: "warning", label: "In progress", raw };
+  }
+
+  if (normalized === "finished") {
+    return { state: "healthy", label: "Finished", raw };
+  }
+
+  if (normalized.includes("cancelled")) {
+    return { state: "stopped", label: "Cancelled", raw };
+  }
+
   if (normalized.includes("healthy")) {
     return { state: "healthy", label: STATUS_LABELS.healthy, raw };
   }

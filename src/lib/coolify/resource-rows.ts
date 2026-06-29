@@ -108,9 +108,9 @@ const buildDeploymentRow = (
   baseUrl: string,
   applications: CoolifyApplication[],
 ): ResourceRow => {
-  const application = applications.find(
-    (app) => app.uuid === deployment.application_uuid,
-  );
+  const application =
+    applications.find((app) => app.uuid === deployment.application_uuid) ??
+    applications.find((app) => app.name === deployment.application_name);
   const deploymentLinks = parseExternalUrlItems(deployment.deployment_url);
 
   return {
